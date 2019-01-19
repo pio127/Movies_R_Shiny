@@ -9,9 +9,16 @@ movies <- read.csv("movie_metadata.csv")[, c('movie_title',
                                              "country",
                                              "title_year",
                                              "imdb_score",
-                                             "num_voted_users"
+                                             "num_voted_users",
+                                             "color"
                                              )]
 movies <- na.omit(movies)
+forClustering = c("budget", 
+                  "gross", 
+                  "title_year", 
+                  "budget", 
+                  "imdb_score",
+                  "num_voted_users")
 
 sidebar <- dashboardSidebar(sidebarMenuOutput("menu"),
                             menuItem(text = "Info", 
@@ -37,34 +44,69 @@ sidebar <- dashboardSidebar(sidebarMenuOutput("menu"),
                             )
 
 body <- dashboardBody(
+
   tabItems(
+      tabItem(tabName = "info",
+        fluidRow(
+       
+          box(title = "About database",
+            # A static infoBox
+            value_box("Movies", 
+                      nrow(movies), 
+                      icon = icon("film"), 
+                      color = "blue", 
+                      size = "huge"),
+            value_box("In Color", 
+                      length(which(movies$color == "Color")), 
+                      icon = icon("sitemap"), 
+                      color = "teal", 
+                      width = 5,
+                      size = "huge"),
+            value_box("Directors", length(unique(movies$director_name)), 
+                      icon = icon("user"), 
+                      color = "teal",
+                      size = "huge"),
+            value_box("Countries", length(unique(movies$country)), 
+                      icon = icon("flag icon"), 
+                      color = "teal",
+                      size = "huge")
+
+            ),
+          box(title = "Top"
+              
+
+          )
+          )
+        ),
     tabItem(tabName = "database",
             fluidRow(DT::dataTableOutput("moviesTable"))
     ),
-    
-    tabItem(
-      tabName = "clustering",
-      h2("K-Means"),
+    tabItem(tabName = "clustering",
+      h2("k-means"),
       fluidRow(
         column(width = 6,
         box(width = 6,
           title = "Parameters", solidHeader = TRUE,status = "primary",
-          selectInput('xcol', 'X Variable', names(iris)),
-          selectInput('ycol', 'Y Variable', names(iris),
-                      selected=names(iris)[[2]]),
-          sliderInput("clusters", "Number of clusters: ", min = 1, max = 12, value = 3)
+          selectInput('xcol', '
+                      X', 
+                      forClustering,
+                      selected = forClustering[[5]]),
+          selectInput('ycol', 
+                      'Y', 
+                      forClustering,
+                      selected = forClustering[[6]]),
+          sliderInput("clusters", "Number of clusters: ", 
+                      min = 1, max = 8, value = 3)
           # numericInput('clusters', 'Cluster count', 3,
           #              min = 1, max = 12)
         ),
         box(width = 6,
             title = "Info", solidHeader = TRUE,status = "primary",
-            print("jest")
-        )
+            print("jest"))
         ),
         box(width = 10,
           title = "Clusters", solidHeader = TRUE, status = "primary",
-          plotOutput('plot1')
-        )
+          plotOutput('plot1'))
       )
     )
   )
@@ -81,7 +123,7 @@ ui <- dashboardPage(
 server <- shinyServer(function(input, output) {
   
   selectedData <- reactive({
-    iris[, c(input$xcol, input$ycol)]
+    movies[, c(input$xcol, input$ycol)]
   })
   
   clusters <- reactive({
@@ -90,25 +132,26 @@ server <- shinyServer(function(input, output) {
   
   output$plot1 <- renderPlot({
     palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3",
-              "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
+              "#FF7F00", "#FFFF33", "#A65628", "#F781BF"))
     
     par(mar = c(5.1, 4.1, 0, 1))
     plot(selectedData(),
          col = clusters()$cluster,
-         pch = 20, cex = 3)
+         pch = 20, 
+         cex = 3)
     points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
   })
   output$moviesTable <-DT::renderDataTable(
     DT::datatable(
       rownames = FALSE,
       colnames = c("Title", "Director", "Budget", "Gross", 
-                   "Country", "Year", "IMDB Rating", "Number of Votes"),
+                   "Country", "Year", "IMDB Rating", "Number of Votes", "Color/BW"),
       filter = 'top',
       options = list(
         pageLength = 12, autoWidth = TRUE
       ),
       data = {
-        stateFilter2 <- subset(movies, movies$num_voted_users > 20000)
+        stateFilter2 <- subset(movies, movies$num_voted_users > 15000)
       }
     )
   )
