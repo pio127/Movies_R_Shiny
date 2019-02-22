@@ -1,4 +1,4 @@
-Shiny app project using dashboard and Semantic UI. 
+### Shiny app project using dashboard with Semantic UI support
 
 Used dataset: https://www.kaggle.com/carolzhangdc/imdb-5000-movie-dataset
 
